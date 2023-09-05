@@ -39,11 +39,13 @@ import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class EssentialsExpansion extends PlaceholderExpansion {
@@ -419,6 +421,18 @@ public class EssentialsExpansion extends PlaceholderExpansion {
                 return user.isMuted() ? DateUtil.formatDateDiff(user.getMuteTimeout()) : "";
             case "geolocation":
                 return user.getGeoLocation() != null ? user.getGeoLocation() : "";
+            case "timezone":
+                String loc = user.getGeoLocation();
+                if (loc == null) return "";
+                String[] args = loc.split(", ");
+                String country = args[args.length-1];
+                String zone = Stream.of(TimeZone.getAvailableIDs())
+                        .filter(zoneId -> zoneId.startsWith(country))
+                        .findAny()
+                        .orElse(TimeZone.getDefault().getID());
+                SimpleDateFormat dateFormat = new SimpleDateFormat();
+                dateFormat.setTimeZone(TimeZone.getTimeZone(zone));
+                return dateFormat.format(new Date());
             case "godmode":
                 return user.isGodModeEnabled() ? papiTrue : papiFalse;
             case "unique":
